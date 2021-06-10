@@ -4,7 +4,7 @@
 #include<stdlib.h>
 #include<string.h>
 
-
+extern int line, column;
 
 
 typedef struct enregistrement_var_const{ 
@@ -81,13 +81,12 @@ void empilerA(char* temp){
 
 char* depilerA(){
 	eltpile* p;
-	extern int L,C;	
 	
 	if(pile1.tetepile!=NULL){
 		p = pile1.tetepile;
 		pile1.tetepile=p->suivant;
 	}
-	else printf("Ligne %d:%d  Depilement d'une pile vide\n",L,C);
+	else printf("Ligne %d:%d  Depilement d'une pile vide\n",line,column);
 	
 	return p->temp;
 }
@@ -101,13 +100,12 @@ void empilerL(char* temp){
 
 char* depilerL(){
 	eltpile* p;
-	extern int L,C;	
 	
 	if(pile2.tetepile!=NULL){
 		p = pile2.tetepile;
 		pile2.tetepile=p->suivant;
 	}
-	else printf("Ligne %d:%d  Depilement d'une pile vide\n",L,C);
+	else printf("Ligne %d:%d  Depilement d'une pile vide\n",line,column);
 	
 	return p->temp;
 }
@@ -174,14 +172,13 @@ elt1varconst* recherchervc(char* nom){
 	return a;
 }
 
-void inserervc(char nom[],char type[],char code[],char val[]){
-	extern int L, C;
+void inserervc(char nom[],char code[],char type[],char val[]){
 	
 	elt1varconst *a;
 	a = recherchervc(nom);
 	
-	if(a==NULL){
-		elt1 temp;
+	if((a==NULL) || (a->e1.type==NULL)){
+		enregistrement_var_const temp;
 		struct elt1varconst *p = malloc(sizeof(elt1varconst));
 		strcpy(temp.nom,nom);
 		strcpy(temp.type,type);
@@ -192,7 +189,7 @@ void inserervc(char nom[],char type[],char code[],char val[]){
 		TAB1.premier=p;
 	}
 	else{
-		printf("Ligne %d:%d  Double declaration detectée!\n",L,C);
+		printf("Ligne %d:%d  Double declaration detectee!\n",line,column);
 		exit(0);
 	}
 }
@@ -212,14 +209,34 @@ void inserertype(char type[]){
 	return;
 }
 
-char* getType(char* nom){	
-	extern int L, C;
+char* getType(char* nom){
 	struct elt1varconst *a;
 	a = recherchervc(nom);
 	if(a!=NULL){
 		return a->e1.type;
 	}
-	else printf("Ligne %d:%d  IDF non déclaré!\n",L,C); exit(0);
+	else printf("Ligne %d:%d  IDF non déclaré!\n",line,column); exit(0);
+}
+
+char* getVal(char* nom){
+	struct elt1varconst *a;
+	a = recherchervc(nom);
+	if(a!=NULL){
+		return a->e1.val;
+	}
+	else printf("Ligne %d:%d  IDF non déclaré!\n",line,column); exit(0);
+}
+
+int isConst(char* nom){
+	struct elt1varconst *a;
+	a = recherchervc(nom);
+	if(a!=NULL){
+		return (strcmp(a->e1.code, "CONST")==0);
+	}
+	else {
+		printf("Ligne %d:%d  IDF non déclaré!\n",line,column); 
+		exit(0);
+	}
 }
 
 
@@ -242,7 +259,7 @@ void inserermc(char nom[],char type[]){
 	a = recherchermc(nom);
 	
 	if(a==NULL){
-		elt2 temp2;
+		enregistrement_mc_sep temp2;
 		elt2mc *p = malloc(sizeof(elt2mc));
 		strcpy(temp2.nom,nom);
 		strcpy(temp2.type,type);
@@ -270,7 +287,7 @@ void inserersep(char nom[],char type[]){
 	a = recherchersep(nom);
 	
 	if(a==NULL){
-		elt2 temp3;
+		enregistrement_mc_sep temp3;
 		elt3sep *p = malloc(sizeof(elt3sep));
 		strcpy(temp3.nom,nom);
 		strcpy(temp3.type,type);
@@ -283,24 +300,23 @@ void inserersep(char nom[],char type[]){
 
 
 int comparerType(char* type1, char* type2){
-	extern int L, C;
+	printf("\n\ntype1 = %s    /   type2 = %s\n\n", type1, type2);
 	if(strcmp(type1,type2)==0)return 0;
 	else{
-		if((strcmp(type1,"int")==0)&&(strcmp(type2, "float")==0)) return 0;
-		else{if((strcmp(type1,"float")==0)&&(strcmp(type2, "int")==0)) return 0;
-			else{printf("Ligne %d:%d  Erreur de compatibilité de types!\n",L,C);exit(0);}
+		if((strcmp(type1,"INTEGER")==0)&&(strcmp(type2, "REAL")==0)) return 0;
+		else{if((strcmp(type1,"REAL")==0)&&(strcmp(type2, "INTEGER")==0)) return 0;
+			else{printf("Ligne %d:%d  Erreur de compatibilité de types!\n",line,column);exit(0);}
 		}
 	}
 }
 
 void exist(char nom[]){
-	extern int L, C;
 	struct elt1varconst *a;
 	a = recherchervc(nom);
 	
 	if(a!=NULL) return;
 	else{
-		printf("Ligne %d:%d  Erreur : idf n'est pas declaré !\n",L,C);
+		printf("Ligne %d:%d  Erreur : idf n'est pas declaré !\n",line,column);
 		exit(0);
 	}
 }
