@@ -35,9 +35,9 @@ char* str;
 %type <str>MembreDroit
 %type <str>Produit
 
-%left PLUS MOINS
-%left MUL DIV 
 %left MC_EQ MC_LT MC_GT MC_LE MC_GE MC_NE
+%left PLUS MOINS
+%left MUL DIV
 
 
 %start S
@@ -96,17 +96,17 @@ Instruction : Affectation
 
 // #### Expression Arithmétique
 
-ExprAr :  ExprAr PLUS ValNum 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
+ExprAr :  ExprAr PLUS ExprAr 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
 										ajouterq("+",$1,$3,temp); 
-										$$ = temp;
+										strcpy($$, temp);
 									}  
-        | ExprAr MOINS ValNum 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
+        | ExprAr MOINS ExprAr 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
 										ajouterq("-",$1,$3,temp); 
-										$$ = temp;    }
-        | ExprAr MUL ValNum 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
+										strcpy($$, temp);    }
+        | ExprAr MUL ExprAr 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
 										ajouterq("*",$1,$3,temp); 
-										$$ = temp;	}
-		| ExprAr DIV ValNum 	{ 	
+										strcpy($$, temp);	}
+		| ExprAr DIV ExprAr 	{ 	
 									if(atof($3)==0) {
 										printf("Ligne %d:%d  Erreur semantique: division par zero\n",line, column);
 										exit(0);
@@ -114,7 +114,7 @@ ExprAr :  ExprAr PLUS ValNum 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp
 									else{ 
 										itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
 										ajouterq("/",$1,$3,temp);
-										$$ = temp;
+										strcpy($$, temp);
 									}
 								}
 		| ValNum { $$ = $1; } 
@@ -143,11 +143,11 @@ ExprL : ExprAr OperateurL ExprAr {
 										case 5: ajouterq("BL","",$1,$3); break;
 										case 6: ajouterq("BNE","",$1,$3); break;
 									}
-									strcpy(tempL,"tempL");
-									itoa(nL,ns,10); nL++;
-									strcat(tempL,ns);
-									empilerL(tempL);
-									ajouterq("=","0","",tempL);
+									strcpy(tempL,"tempL");         // tempL = "tempL"
+									itoa(nL,ns,10); nL++;		   //  ns = string(nL)
+									strcat(tempL,ns);			   // tempL = tempL + ns
+									empilerL(tempL);				
+									ajouterq("=","0","",tempL);    
 									saveqcL2 = qc;
 									ajouterq("BR","","",""); 
 									itoa(qc,buf,10);
@@ -244,4 +244,5 @@ int main(int argc, const char *argv[]){
 int yyerror(char* msg){
 	//printf("\nErreur syntaxique : %s ligne : %d    colonne : %d\n", msg, line, column);
 	printf("Line %d, Column %d : %s", line, column, msg);
+	exit(0);
 }
