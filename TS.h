@@ -110,6 +110,40 @@ char* depilerL(){
 	return p->temp;
 }
 
+
+
+typedef struct eltpileQC eltpileQC;
+struct eltpileQC{
+	int qc;
+	eltpileQC* suivant;
+};
+
+typedef struct pileQC pileQC;
+struct pileQC{
+	eltpileQC* tetepile;
+};
+
+struct pileQC pileqc;				//temp expression Arithmétique
+
+void empilerQC(int qc){
+	eltpileQC *p = malloc(sizeof(eltpile));
+	p->qc = qc;
+	p->suivant = pileqc.tetepile;
+	pileqc.tetepile = p;
+}
+
+int depilerQC(){
+	eltpileQC* p;
+	
+	if(pileqc.tetepile!=NULL){
+		p = pileqc.tetepile;
+		pileqc.tetepile=p->suivant;
+	}
+	else printf("Ligne %d:%d  Depilement d'une pile vide\n",line,column);
+	
+	return p->qc;
+}
+
 //*********************************************  AFFICHAGE DES TS  ******************************************************************************************************
 
 

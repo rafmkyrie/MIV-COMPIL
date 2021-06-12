@@ -192,6 +192,8 @@ ListeProduit : ExprAr
 // ##### BOUCLE
 
 Boucle : TempBoucle2 MC_EXECUTE ACCOLADE_OUVRANTE ListeInstructions ACCOLADE_FERMANTE POINTVIRGULE{
+													save_bzWHILE = depilerQC();
+													save_bzWHILE1 = depilerQC();
 													itoa(save_bzWHILE1,buf,10);
 													ajouterq("BR",buf,"","");
 													itoa(qc,buf,10);
@@ -201,10 +203,12 @@ Boucle : TempBoucle2 MC_EXECUTE ACCOLADE_OUVRANTE ListeInstructions ACCOLADE_FER
 TempBoucle2 : TempBoucle1 ExprL {
 								strcpy(valL,depilerL());
 								save_bzWHILE = qc;
+								empilerQC(qc);
 								ajouterq("BZ","",valL,"");
 							};
 
 TempBoucle1 : MC_WHILE {
+	empilerQC(qc);
 	save_bzWHILE1=qc;
 }
 
@@ -212,11 +216,14 @@ TempBoucle1 : MC_WHILE {
 
 Controle : TempControle2 MC_OTHERWISE ListeInstructions POINTVIRGULE {
 																		itoa(qc,buf,10); 
+																		
+																		save_brIF = depilerQC();
 																		ajourq(save_brIF, 2, buf);
 																	};
 
 TempControle2 : TempControle1 MC_DO ListeInstructions {
-														save_brIF=qc;
+														save_bzIF = depilerQC();
+														empilerQC(qc);
 														ajouterq("BR","","","");
 														itoa(qc,buf,10);
 														ajourq(save_bzIF, 2, buf);
@@ -224,7 +231,7 @@ TempControle2 : TempControle1 MC_DO ListeInstructions {
 
 TempControle1 : MC_WHEN ExprL {
 								strcpy(valL,depilerL());
-								save_bzIF=qc;
+								empilerQC(qc);
 								ajouterq("BZ","",valL,"");
 							};
 
