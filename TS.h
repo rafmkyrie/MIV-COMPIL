@@ -223,7 +223,7 @@ void inserervc(char nom[],char code[],char type[],char val[]){
 		TAB1.premier=p;
 	}
 	else{
-		printf("Ligne %d:%d  Double declaration detectee!\n",line,column);
+		printf("Ligne %d:%d  Double declaration detectee : %s !\n", nom, line,column);
 		exit(0);
 	}
 }
@@ -334,12 +334,11 @@ void inserersep(char nom[],char type[]){
 
 
 int comparerType(char* type1, char* type2){
-	printf("\n\ntype1 = %s    /   type2 = %s\n\n", type1, type2);
 	if(strcmp(type1,type2)==0)return 0;
 	else{
 		if((strcmp(type1,"INTEGER")==0)&&(strcmp(type2, "REAL")==0)) return 0;
 		else{if((strcmp(type1,"REAL")==0)&&(strcmp(type2, "INTEGER")==0)) return 0;
-			else{printf("Ligne %d:%d  Erreur de compatibilité de types!\n",line,column);exit(0);}
+			else{printf("\nLigne %d:%d  Erreur de compatibilité de types!\n",line,column);exit(0);}
 		}
 	}
 }
@@ -350,7 +349,7 @@ void exist(char nom[]){
 	
 	if(a!=NULL) return;
 	else{
-		printf("Ligne %d:%d  Erreur : idf n'est pas declaré !\n",line,column);
+		printf("\nLigne %d:%d  Erreur : idf n'est pas declaré : %s !\n",line,column,nom);
 		exit(0);
 	}
 }
@@ -398,10 +397,12 @@ void ajourq(int qc,int i, char ch[]){
 }
 
 void afficherq(){
-	printf("**********Affichage des quadruplets**********\n\n");
-	printf("Num\tOpr\t\tOp1\t\tOp2\t\tRes\n");
+	printf("**********     Affichage des quadruplets     **********\n\n");
+	printf("Num\t\tOpr\t\tOp1\t\tOp2\t\tRes\n");
+	printf("------------------------------------------------------------------------\n");
 	for(int i=0;i<qc;i++){
-		printf("%d\t%s\t\t%s\t\t%s\t\t%s\n",i,quad[i].opr,quad[i].op1,quad[i].op2,quad[i].res);
+		printf("%d\t|\t%s\t|\t%s\t|\t%s\t|\t%s\n",i,quad[i].opr,quad[i].op1,quad[i].op2,quad[i].res);
+		printf("------------------------------------------------------------------------\n");
 	}
 }
 

@@ -96,7 +96,7 @@ IDF {LettreMaj}({Lettre}|{Chiffre})*
        }
        else{
               column = column + strlen(yytext);
-              printf("%s", yytext);
+              printf("%s ", yytext);
               yylval.str=strdup(yytext);
               return IDF; 
        }

@@ -8,7 +8,7 @@
 	extern FILE* yyin ;
 	extern int line, column;
 
-	char type[10], ns[5], op1[10], op2[10], temp[10], tempL[10], buf[5], valL[10];
+	char type[10], ns[5], op1[10], op2[10], temp[10], tempL[10], tempProd[10], buf[5], valL[10], idfname[20];
 	int n=1, nL=1, saveqcL, saveqcL2, op, save_brIF, save_bzIF, save_bzWHILE, save_bzWHILE1;
 
 	int yyparse();
@@ -44,7 +44,7 @@ char* str;
 
 %%
 
-S : EnTete BlocDeclaration BlocInstructions  { printf("Syntaxe correcte");   ajouterq("","","","");    YYACCEPT; }
+S : EnTete BlocDeclaration BlocInstructions  { printf("Syntaxe correcte\n\n\n");   ajouterq("","","","");    YYACCEPT; }
 ;   
 
 EnTete : MC_CODE IDF { inserervc($2,"","PROG",""); }
@@ -98,13 +98,17 @@ Instruction : Affectation
 
 ExprAr :  ExprAr PLUS ExprAr 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
 										ajouterq("+",$1,$3,temp); 
+										inserervc(temp, "TEMP", "REAL", "");
 										strcpy($$, temp);
 									}  
         | ExprAr MOINS ExprAr 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
-										ajouterq("-",$1,$3,temp); 
+										ajouterq("-",$1,$3,temp);
+										inserervc(temp, "TEMP", "REAL", "");
 										strcpy($$, temp);    }
-        | ExprAr MUL ExprAr 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
+        | ExprAr MUL ExprAr 		{	
+										itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
 										ajouterq("*",$1,$3,temp); 
+										inserervc(temp, "TEMP", "REAL", "");
 										strcpy($$, temp);	}
 		| ExprAr DIV ExprAr 	{ 	
 									if(atof($3)==0) {
@@ -114,6 +118,7 @@ ExprAr :  ExprAr PLUS ExprAr 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp
 									else{ 
 										itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
 										ajouterq("/",$1,$3,temp);
+										inserervc(temp, "TEMP", "REAL", "");
 										strcpy($$, temp);
 									}
 								}
@@ -136,12 +141,12 @@ ExprL : ExprAr OperateurL ExprAr {
 									saveqcL = qc; 
 
 									switch(op){
-										case 1: ajouterq("BE","",$1,$3); break;        //jump si vrai
-										case 2: ajouterq("BGE","",$1,$3); break;
-										case 3: ajouterq("BG","",$1,$3); break;
-										case 4: ajouterq("BLE","",$1,$3); break;
-										case 5: ajouterq("BL","",$1,$3); break;
-										case 6: ajouterq("BNE","",$1,$3); break;
+										case 1: ajouterq("BE",$1,$3,""); break;        //jump si vrai
+										case 2: ajouterq("BGE",$1,$3,""); break;
+										case 3: ajouterq("BG",$1,$3,""); break;
+										case 4: ajouterq("BLE",$1,$3,""); break;
+										case 5: ajouterq("BL",$1,$3,""); break;
+										case 6: ajouterq("BNE",$1,$3,""); break;
 									}
 									strcpy(tempL,"tempL");         // tempL = "tempL"
 									itoa(nL,ns,10); nL++;		   //  ns = string(nL)
@@ -151,10 +156,10 @@ ExprL : ExprAr OperateurL ExprAr {
 									saveqcL2 = qc;
 									ajouterq("BR","","",""); 
 									itoa(qc,buf,10);
-									ajourq(saveqcL, 2, buf);
+									ajourq(saveqcL, 4, buf);
 									ajouterq("=","1","",tempL);
 									itoa(qc,buf,10);
-									ajourq(saveqcL2 ,2,buf);
+									ajourq(saveqcL2 ,4,buf);
 									};
 
 OperateurL : MC_EQ {op=1;}
@@ -168,15 +173,20 @@ OperateurL : MC_EQ {op=1;}
 
 // ##### AFFECTATION
 
-Affectation : IDF AFFECTATION MembreDroit POINTVIRGULE {	
-															exist($1); // vérifie l'existance l'IDF dans la TS															
-															if(isConst($1)) {
+Affectation : AffectationTemp MembreDroit POINTVIRGULE {	
+															exist(idfname); // vérifie l'existance l'IDF dans la TS															
+															if(isConst(idfname)) {
 																printf("Erreur semantique : changement de valeur d'une constante !");
 																exit(0);
 															}
-															comparerType(getType($1),type); // compare les types de l'idf avec celui du membre droit
-															ajouterq("=",$3,"",$1);
+															comparerType(getType(idfname),type); // compare les types de l'idf avec celui du membre droit
+															
+															ajouterq("=",$2,"",idfname);
 														};
+
+AffectationTemp : IDF AFFECTATION {
+	strcpy(idfname, $1);
+}
 
 MembreDroit : ExprAr {strcpy(type, "REAL"); $$ = $1;}
               | Produit {strcpy(type,"REAL"); $$ = $1;}
@@ -184,10 +194,24 @@ MembreDroit : ExprAr {strcpy(type, "REAL"); $$ = $1;}
               | STRING	{strcpy(type, "STRING"); $$ = $1;}
               ;
 
-Produit : MC_PROD PARANTHESE_OUVRANTE ListeProduit PARANTHESE_FERMANTE{ $$ = "fermetagueule"};
+Produit : ProduitTemp ListeProduit PARANTHESE_FERMANTE { strcpy($$,tempProd); };
 
-ListeProduit : ExprAr
-        | ListeProduit VIRGULE ExprAr;
+ProduitTemp : MC_PROD PARANTHESE_OUVRANTE  {
+	itoa(n,ns,10); strcpy(tempProd,"temp"); strcat(tempProd,ns); n++;
+	ajouterq("=","1","",tempProd);
+	inserervc(tempProd, "TEMP", "REAL", ""); 
+}
+
+ListeProduit : ExprAr 	{
+							itoa(qc+2,buf,10);
+							ajouterq("BLE", $1, "0", buf);
+							ajouterq("*", tempProd, $1, tempProd);
+						}
+        | ListeProduit VIRGULE ExprAr{
+										itoa(qc+2,buf,10);
+										ajouterq("BLE", $3, "0", buf);
+										ajouterq("*", tempProd, $3, tempProd);
+									};
 
 // ##### BOUCLE
 
@@ -197,7 +221,7 @@ Boucle : TempBoucle2 MC_EXECUTE ACCOLADE_OUVRANTE ListeInstructions ACCOLADE_FER
 													itoa(save_bzWHILE1,buf,10);
 													ajouterq("BR",buf,"","");
 													itoa(qc,buf,10);
-													ajourq(save_bzWHILE, 2, buf);
+													ajourq(save_bzWHILE, 4, buf);
 };
 
 TempBoucle2 : TempBoucle1 ExprL {
@@ -216,9 +240,8 @@ TempBoucle1 : MC_WHILE {
 
 Controle : TempControle2 MC_OTHERWISE ListeInstructions POINTVIRGULE {
 																		itoa(qc,buf,10); 
-																		
 																		save_brIF = depilerQC();
-																		ajourq(save_brIF, 2, buf);
+																		ajourq(save_brIF, 4, buf);
 																	};
 
 TempControle2 : TempControle1 MC_DO ListeInstructions {
@@ -226,13 +249,13 @@ TempControle2 : TempControle1 MC_DO ListeInstructions {
 														empilerQC(qc);
 														ajouterq("BR","","","");
 														itoa(qc,buf,10);
-														ajourq(save_bzIF, 2, buf);
+														ajourq(save_bzIF, 4, buf);
 													};
 
 TempControle1 : MC_WHEN ExprL {
 								strcpy(valL,depilerL());
 								empilerQC(qc);
-								ajouterq("BZ","",valL,"");
+								ajouterq("BZ",valL,"","");
 							};
 
 
@@ -250,6 +273,6 @@ int main(int argc, const char *argv[]){
 
 int yyerror(char* msg){
 	//printf("\nErreur syntaxique : %s ligne : %d    colonne : %d\n", msg, line, column);
-	printf("Line %d, Column %d : %s", line, column, msg);
+	printf("\nLine %d, Column %d : %s", line, column, msg);
 	exit(0);
 }
