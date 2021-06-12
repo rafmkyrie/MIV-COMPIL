@@ -39,7 +39,7 @@ Char   (\'{Lettre}\')
 String   (\"([^\\\"]|\\.)*\")
 
 Commentaire ({Dollar}[^{Dollar}]*{Dollar})
-IDF {LettreMaj}({Lettre}|{Chiffre})+
+IDF {LettreMaj}({Lettre}|{Chiffre})*
 
 
 

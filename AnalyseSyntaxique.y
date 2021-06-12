@@ -8,7 +8,8 @@
 	extern FILE* yyin ;
 	extern int line, column;
 
-	char type[10];
+	char type[10], ns[5], op1[10], op2[10], temp[10], tempL[10], buf[5], valL[10];
+	int n=1, nL=1, saveqcL, saveqcL2, op, save_brIF, save_bzIF, save_bzWHILE, save_bzWHILE1;
 
 	int yyparse();
 	int yylex();
@@ -22,7 +23,8 @@ int entier;
 char* str;
 }
 
-%token MC_CODE MC_START MC_END MC_CONST MC_PROD MC_WHILE MC_EXECUTE MC_WHEN MC_DO MC_OTHERWISE MC_EQ MC_LT MC_GT MC_LE MC_GE MC_NE DOLLAR PLUS MOINS MUL DIV AFFECTATION VIRGULE POINTVIRGULE PARANTHESE_OUVRANTE PARANTHESE_FERMANTE ACCOLADE_OUVRANTE ACCOLADE_FERMANTE
+%token MC_CODE MC_START MC_END MC_CONST MC_PROD MC_WHILE MC_EXECUTE MC_WHEN MC_DO MC_OTHERWISE MC_EQ MC_LT MC_GT MC_LE MC_GE MC_NE 
+%token PLUS MOINS MUL DIV AFFECTATION DOLLAR VIRGULE POINTVIRGULE PARANTHESE_OUVRANTE PARANTHESE_FERMANTE ACCOLADE_OUVRANTE ACCOLADE_FERMANTE
 %token <str>IDF <str>MC_INTEGER <str>MC_REAL <str>MC_CHAR <str>MC_STRING
 %token <str>INTEGER <str>INTEGER_SIGNE <str>REAL <str>CHAR <str>STRING 
 
@@ -30,8 +32,10 @@ char* str;
 %type <str>Valeur
 %type <str>ValNum
 %type <str>ExprAr
+%type <str>MembreDroit
+%type <str>Produit
 
-%left Plus Moins
+%left PLUS MOINS
 %left MUL DIV 
 %left MC_EQ MC_LT MC_GT MC_LE MC_GE MC_NE
 
@@ -40,7 +44,7 @@ char* str;
 
 %%
 
-S : EnTete BlocDeclaration BlocInstructions  { printf("Syntaxe correcte");      YYACCEPT; }
+S : EnTete BlocDeclaration BlocInstructions  { printf("Syntaxe correcte");   ajouterq("","","","");    YYACCEPT; }
 ;   
 
 EnTete : MC_CODE IDF { inserervc($2,"","PROG",""); }
@@ -92,16 +96,33 @@ Instruction : Affectation
 
 // #### Expression Arithmétique
 
-ExprAr :  ValNum PLUS ExprAr 		{	}  
-        | ValNum MOINS ExprAr 		{	}
-        | ValNum MUL ExprAr 		{	}
-		| ValNum DIV ExprAr 	{ if(atof($3)==0) {printf("Ligne %d:%d  Erreur semantique: division par zero\n",line, column);exit(0);} }
-		| ValNum { } 
+ExprAr :  ExprAr PLUS ValNum 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
+										ajouterq("+",$1,$3,temp); 
+										$$ = temp;
+									}  
+        | ExprAr MOINS ValNum 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
+										ajouterq("-",$1,$3,temp); 
+										$$ = temp;    }
+        | ExprAr MUL ValNum 		{	itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
+										ajouterq("*",$1,$3,temp); 
+										$$ = temp;	}
+		| ExprAr DIV ValNum 	{ 	
+									if(atof($3)==0) {
+										printf("Ligne %d:%d  Erreur semantique: division par zero\n",line, column);
+										exit(0);
+									}
+									else{ 
+										itoa(n,ns,10); strcpy(temp,"temp"); strcat(temp,ns); n++;
+										ajouterq("/",$1,$3,temp);
+										$$ = temp;
+									}
+								}
+		| ValNum { $$ = $1; } 
 		;
 
 ValNum :  IDF 	{ 
 					exist($1); comparerType(getType($1),"REAL"); 
-					$$ = getVal($1); 
+					$$ = $1; 
 					
 				} 
          | INTEGER {$$ = $1;} 
@@ -111,14 +132,37 @@ ValNum :  IDF 	{
 
 // #### Expression Logique
 
-ExprL : ExprAr OperateurL ExprAr { };
+ExprL : ExprAr OperateurL ExprAr { 
+									saveqcL = qc; 
 
-OperateurL : MC_EQ {}
-       | MC_GE {}
-	   | MC_GT {}
-	   | MC_LE {}
-	   | MC_LT {}
-	   | MC_NE {}
+									switch(op){
+										case 1: ajouterq("BE","",$1,$3); break;        //jump si vrai
+										case 2: ajouterq("BGE","",$1,$3); break;
+										case 3: ajouterq("BG","",$1,$3); break;
+										case 4: ajouterq("BLE","",$1,$3); break;
+										case 5: ajouterq("BL","",$1,$3); break;
+										case 6: ajouterq("BNE","",$1,$3); break;
+									}
+									strcpy(tempL,"tempL");
+									itoa(nL,ns,10); nL++;
+									strcat(tempL,ns);
+									empilerL(tempL);
+									ajouterq("=","0","",tempL);
+									saveqcL2 = qc;
+									ajouterq("BR","","",""); 
+									itoa(qc,buf,10);
+									ajourq(saveqcL, 2, buf);
+									ajouterq("=","1","",tempL);
+									itoa(qc,buf,10);
+									ajourq(saveqcL2 ,2,buf);
+									};
+
+OperateurL : MC_EQ {op=1;}
+       | MC_GE {op=2;}
+	   | MC_GT {op=3;}
+	   | MC_LE {op=4;}
+	   | MC_LT {op=5;}
+	   | MC_NE {op=6;}
 	   ;
 
 
@@ -131,28 +175,58 @@ Affectation : IDF AFFECTATION MembreDroit POINTVIRGULE {
 																exit(0);
 															}
 															comparerType(getType($1),type); // compare les types de l'idf avec celui du membre droit
-
-
+															ajouterq("=",$3,"",$1);
 														};
 
-MembreDroit : ExprAr {strcpy(type, "REAL");}
-              | Produit {strcpy(type,"REAL");}
-              | CHAR {strcpy(type, "CHAR");}
-              | STRING	{strcpy(type, "STRING");}
+MembreDroit : ExprAr {strcpy(type, "REAL"); $$ = $1;}
+              | Produit {strcpy(type,"REAL"); $$ = $1;}
+              | CHAR {strcpy(type, "CHAR"); $$ = $1;}
+              | STRING	{strcpy(type, "STRING"); $$ = $1;}
               ;
 
-Produit : MC_PROD PARANTHESE_OUVRANTE ListeProduit PARANTHESE_FERMANTE;
+Produit : MC_PROD PARANTHESE_OUVRANTE ListeProduit PARANTHESE_FERMANTE{ $$ = "fermetagueule"};
 
 ListeProduit : ExprAr
         | ListeProduit VIRGULE ExprAr;
 
 // ##### BOUCLE
 
-Boucle : MC_WHILE ExprL MC_EXECUTE ACCOLADE_OUVRANTE ListeInstructions ACCOLADE_FERMANTE POINTVIRGULE;
+Boucle : TempBoucle2 MC_EXECUTE ACCOLADE_OUVRANTE ListeInstructions ACCOLADE_FERMANTE POINTVIRGULE{
+													itoa(save_bzWHILE1,buf,10);
+													ajouterq("BR",buf,"","");
+													itoa(qc,buf,10);
+													ajourq(save_bzWHILE, 2, buf);
+};
+
+TempBoucle2 : TempBoucle1 ExprL {
+								strcpy(valL,depilerL());
+								save_bzWHILE = qc;
+								ajouterq("BZ","",valL,"");
+							};
+
+TempBoucle1 : MC_WHILE {
+	save_bzWHILE1=qc;
+}
 
 // ##### Controle
 
-Controle : MC_WHEN ExprL MC_DO ListeInstructions MC_OTHERWISE ListeInstructions POINTVIRGULE;
+Controle : TempControle2 MC_OTHERWISE ListeInstructions POINTVIRGULE {
+																		itoa(qc,buf,10); 
+																		ajourq(save_brIF, 2, buf);
+																	};
+
+TempControle2 : TempControle1 MC_DO ListeInstructions {
+														save_brIF=qc;
+														ajouterq("BR","","","");
+														itoa(qc,buf,10);
+														ajourq(save_bzIF, 2, buf);
+													};
+
+TempControle1 : MC_WHEN ExprL {
+								strcpy(valL,depilerL());
+								save_bzIF=qc;
+								ajouterq("BZ","",valL,"");
+							};
 
 
 
