@@ -17,7 +17,7 @@ extern YYSTYPE yylval;
 %}
 
 
-Dollar ("$")
+
 Plus ("+")
 Moins ("-")
 Mul ("*")
@@ -41,10 +41,8 @@ IntegerSigne  ([-+]{Integer})
 Char   (\'{Lettre}\')
 String   (\"([^\\\"]|\\.)*\")
 
-Commentaire ({Dollar}[^{Dollar}]*{Dollar})
+Commentaire ($[^$]*$)
 IDF {LettreMaj}({Lettre}|{Chiffre})*
-
-
 
 %%
 
@@ -72,7 +70,7 @@ IDF {LettreMaj}({Lettre}|{Chiffre})*
 "GE"   { inserermc(yytext,"MC"); column = column + strlen(yytext); printf("MC_ge "); return MC_GE; } 
 "NE"   { inserermc(yytext,"MC"); column = column + strlen(yytext); printf("MC_ne "); return MC_NE; } 
 
-{Dollar} { inserersep(yytext,"SEP"); column = column + strlen(yytext); printf("Dollar "); return DOLLAR; } 
+
 {Plus}   { inserersep(yytext,"SEP"); column = column + strlen(yytext); printf("Plus "); return PLUS; } 
 {Moins}  { inserersep(yytext,"SEP"); column = column + strlen(yytext); printf("Moins "); return MOINS; } 
 {Mul}   { inserersep(yytext,"SEP"); column = column + strlen(yytext); printf("Mul "); return MUL; } 

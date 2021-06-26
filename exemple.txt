@@ -1,0 +1,9 @@
+CODE Programme
+
+INTEGER Hello, A, I, J;
+CONST INTEGER Allo := 20;
+
+
+START
+    A := PROD(A, I, J); 
+END.
