@@ -1,3 +1,5 @@
+/*Chiboub Abderraouf Nassim*/
+/*Mouffok Tayeb Abderraouf*/
 %{
 #include<stdlib.h>
 #include<stdio.h>

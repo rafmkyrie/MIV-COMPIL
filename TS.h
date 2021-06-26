@@ -1,3 +1,5 @@
+/*Chiboub Abderraouf Nassim*/
+/*Mouffok Tayeb Abderraouf*/
 #ifndef TS_H_INCLUDED
 #define TS_H_INCLUDED
 #include<stdio.h>
@@ -6,7 +8,7 @@
 
 extern int line, column;
 
-
+//*Déclaration des structures
 typedef struct enregistrement_var_const{ 
    char nom[20];
    char code[20];
@@ -54,32 +56,35 @@ struct teteTab3{
 };
 
 
-struct teteTab1 TAB1;
-struct teteTab2 TAB2;
-struct teteTab3 TAB3;
+struct teteTab1 TAB1; //Tete de Liste de la table  des variables
+struct teteTab2 TAB2; //Tete de Liste de la table  des mot clés
+struct teteTab3 TAB3; //Tete de Liste de la table  des séparateurs
 
+// Un elément de la pile
 typedef struct eltpile eltpile;
 struct eltpile{
 	char temp[10];
 	eltpile* suivant;
 };
 
+// La pile nous permettra de stocker les valeurs des expressions logiques successives 
 typedef struct pile pile;
 struct pile{
 	eltpile* tetepile;
 };
 
-struct pile pile1;				//temp expression Arithmétique
-struct pile pile2;				//temp expression Logique
+struct pile pile1;				//temp expression Logique
 
-void empilerA(char* temp){
+
+//Les fonctions de controle de la pile des expressions logique
+void empilerL(char* temp){
 	eltpile *p = malloc(sizeof(eltpile));
 	strcpy(p->temp,temp);
 	p->suivant = pile1.tetepile;
 	pile1.tetepile = p;
 }
 
-char* depilerA(){
+char* depilerL(){
 	eltpile* p;
 	
 	if(pile1.tetepile!=NULL){
@@ -91,27 +96,8 @@ char* depilerA(){
 	return p->temp;
 }
 
-void empilerL(char* temp){
-	eltpile *p = malloc(sizeof(eltpile));
-	strcpy(p->temp,temp);
-	p->suivant = pile2.tetepile;
-	pile2.tetepile = p;
-}
 
-char* depilerL(){
-	eltpile* p;
-	
-	if(pile2.tetepile!=NULL){
-		p = pile2.tetepile;
-		pile2.tetepile=p->suivant;
-	}
-	else printf("Ligne %d:%d  Depilement d'une pile vide\n",line,column);
-	
-	return p->temp;
-}
-
-
-
+//Pile qui servira à stocker les qc (utile pour les imbrications de WHILE et IF)
 typedef struct eltpileQC eltpileQC;
 struct eltpileQC{
 	int qc;
@@ -123,7 +109,7 @@ struct pileQC{
 	eltpileQC* tetepile;
 };
 
-struct pileQC pileqc;				//temp expression Arithmétique
+struct pileQC pileqc;				
 
 void empilerQC(int qc){
 	eltpileQC *p = malloc(sizeof(eltpile));
@@ -193,6 +179,7 @@ void affichersep(){
 
 //***********************************************************************************************************************************************************
 
+//Rechercher une variable/constante dans sa TS
 elt1varconst* recherchervc(char* nom){
 	elt1varconst *a;
 	a = TAB1.premier;
@@ -206,6 +193,7 @@ elt1varconst* recherchervc(char* nom){
 	return a;
 }
 
+//Insérer une variable/constante dans sa TS
 void inserervc(char nom[],char code[],char type[],char val[]){
 	
 	elt1varconst *a;
@@ -228,6 +216,7 @@ void inserervc(char nom[],char code[],char type[],char val[]){
 	}
 }
 
+//Insérer le type d'une variable/constante dans sa TS
 void inserertype(char type[]){
 	elt1varconst *a;
 	a = TAB1.premier;
@@ -243,6 +232,7 @@ void inserertype(char type[]){
 	return;
 }
 
+// Retourner le type d'un IDF
 char* getType(char* nom){
 	struct elt1varconst *a;
 	a = recherchervc(nom);
@@ -252,6 +242,7 @@ char* getType(char* nom){
 	else printf("Ligne %d:%d  IDF non déclaré!\n",line,column); exit(0);
 }
 
+//Retourner la valeur d'un IDF
 char* getVal(char* nom){
 	struct elt1varconst *a;
 	a = recherchervc(nom);
@@ -261,6 +252,7 @@ char* getVal(char* nom){
 	else printf("Ligne %d:%d  IDF non déclaré!\n",line,column); exit(0);
 }
 
+// Vérifier si un IDF est une constante
 int isConst(char* nom){
 	struct elt1varconst *a;
 	a = recherchervc(nom);
@@ -273,7 +265,7 @@ int isConst(char* nom){
 	}
 }
 
-
+//Rechercher un mot clé dans sa TS
 elt2mc* recherchermc(char* nom){
 	elt2mc *a;
 	a = TAB2.premier;
@@ -286,7 +278,7 @@ elt2mc* recherchermc(char* nom){
 	return a;
 }
 
-
+//Insérer un mot clé dans sa TS
 void inserermc(char nom[],char type[]){
 	
 	elt2mc *a;
@@ -303,6 +295,7 @@ void inserermc(char nom[],char type[]){
 	}
 }
 
+//Rechercher un séparateur dans sa TS
 elt3sep* recherchersep(char* nom){
 	elt3sep *a;
 	a = TAB3.premier;
@@ -315,7 +308,7 @@ elt3sep* recherchersep(char* nom){
 	return a;
 }
 
-
+// Insérer un séparateur dans sa TS
 void inserersep(char nom[],char type[]){
 	elt3sep *a;
 	a = recherchersep(nom);
@@ -332,7 +325,7 @@ void inserersep(char nom[],char type[]){
 	
 }
 
-
+// Comparer deux types ( problème de compatibilité)
 int comparerType(char* type1, char* type2){
 	if(strcmp(type1,type2)==0)return 0;
 	else{
@@ -343,6 +336,7 @@ int comparerType(char* type1, char* type2){
 	}
 }
 
+//Vérifie si un IDF existe ( il a déja été déclaré)
 void exist(char nom[]){
 	struct elt1varconst *a;
 	a = recherchervc(nom);
@@ -377,6 +371,7 @@ typedef struct qdr{
 qdr quad[1000];
 int qc=0;
 
+//Ajouter un quadruplé
 void ajouterq(char opr[],char op1[],char op2[],char res[])
 {
 	strcpy(quad[qc].opr,opr);
@@ -386,6 +381,7 @@ void ajouterq(char opr[],char op1[],char op2[],char res[])
 	qc++;
 }	
 
+//Mettre à jour un quadruplé
 void ajourq(int qc,int i, char ch[]){
 	switch(i){
 		case 1: strcpy(quad[qc].opr,ch); break;
@@ -396,6 +392,7 @@ void ajourq(int qc,int i, char ch[]){
 	}
 }
 
+//Afficher la liste des quadruplé
 void afficherq(){
 	printf("**********     Affichage des quadruplets     **********\n\n");
 	printf("Num\t\tOpr\t\tOp1\t\tOp2\t\tRes\n");
@@ -406,6 +403,7 @@ void afficherq(){
 	}
 }
 
+// Fonction qui regroupe tout les fonctions d'affichage
 void affichertout(){
 	affichervc();
 	affichermc();
