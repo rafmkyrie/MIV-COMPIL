@@ -11,7 +11,7 @@
 	extern int line, column;
 
 	char type[10], ns[5], op1[10], op2[10], temp[10], tempL[10], tempProd[10], buf[5], valL[10], idfname[20];
-	int n=1, nL=1, saveqcL, saveqcL2, op, save_brIF, save_bzIF, save_bzWHILE, save_bzWHILE1;
+	int n=1, nL=1, saveqcL, saveqcL2, op, save_brIF, save_bzIF, save_bzWHILEdeb, save_bzWHILEfin;
 
 	int yyparse();
 	int yylex();
@@ -139,24 +139,31 @@ ValNum :  IDF 	{
 
 // #### Expression Logique
 
+
 ExprL : ExprAr OperateurL ExprAr { 
 									saveqcL = qc; 
 
+									// Ici la valeur de op determinera quel type de saut conditionnel nous utiliserons
 									switch(op){
-										case 1: ajouterq("BE",$1,$3,""); break;        //jump si vrai
-										case 2: ajouterq("BGE",$1,$3,""); break;
-										case 3: ajouterq("BG",$1,$3,""); break;
-										case 4: ajouterq("BLE",$1,$3,""); break;
-										case 5: ajouterq("BL",$1,$3,""); break;
-										case 6: ajouterq("BNE",$1,$3,""); break;
+										case 1: ajouterq("BE",$1,$3,""); break;        // Egale
+										case 2: ajouterq("BGE",$1,$3,""); break;       // Supérieur ou égale
+										case 3: ajouterq("BG",$1,$3,""); break;		   // Strictement supérieur
+										case 4: ajouterq("BLE",$1,$3,""); break;       // Inférieur ou égale
+										case 5: ajouterq("BL",$1,$3,""); break;        // Strictement Inférieur
+										case 6: ajouterq("BNE",$1,$3,""); break;       // Pas égale
 									}
+									// Les lignes suivantes servent à générer les temps 
+
+									// 
 									strcpy(tempL,"tempL");         // tempL = "tempL"
 									itoa(nL,ns,10); nL++;		   //  ns = string(nL)
 									strcat(tempL,ns);			   // tempL = tempL + ns
-									empilerL(tempL);				
-									ajouterq("=","0","",tempL);    
+									empilerL(tempL);
+
+									ajouterq("=","0","",tempL); 
 									saveqcL2 = qc;
 									ajouterq("BR","","",""); 
+
 									itoa(qc,buf,10);
 									ajourq(saveqcL, 4, buf);
 									ajouterq("=","1","",tempL);
@@ -218,24 +225,22 @@ ListeProduit : ExprAr 	{
 // ##### BOUCLE
 
 Boucle : TempBoucle2 MC_EXECUTE ACCOLADE_OUVRANTE ListeInstructions ACCOLADE_FERMANTE POINTVIRGULE{
-													save_bzWHILE = depilerQC();
-													save_bzWHILE1 = depilerQC();
-													itoa(save_bzWHILE1,buf,10);
+													save_bzWHILEfin = depilerQC();
+													save_bzWHILEdeb = depilerQC();
+													itoa(save_bzWHILEdeb,buf,10);
 													ajouterq("BR",buf,"","");
 													itoa(qc,buf,10);
-													ajourq(save_bzWHILE, 4, buf);
+													ajourq(save_bzWHILEfin, 4, buf);
 };
 
 TempBoucle2 : TempBoucle1 ExprL {
 								strcpy(valL,depilerL());
-								save_bzWHILE = qc;
 								empilerQC(qc);
 								ajouterq("BZ","",valL,"");
 							};
 
 TempBoucle1 : MC_WHILE {
 	empilerQC(qc);
-	save_bzWHILE1=qc;
 }
 
 // ##### Controle
@@ -255,6 +260,7 @@ TempControle2 : TempControle1 MC_DO ListeInstructions {
 													};
 
 TempControle1 : MC_WHEN ExprL {
+								// on dépile le temp qui a été empilé à la fin de l'évaluation de l'expression logique
 								strcpy(valL,depilerL());
 								empilerQC(qc);
 								ajouterq("BZ",valL,"","");

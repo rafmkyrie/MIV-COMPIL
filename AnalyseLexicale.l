@@ -16,6 +16,7 @@ extern YYSTYPE yylval;
 
 %}
 
+
 Dollar ("$")
 Plus ("+")
 Moins ("-")
